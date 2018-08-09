@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/emersion/go-message/mail"
@@ -65,6 +66,7 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 
 	fromAddrStr := fromList[0].Address
 	var fromAddr *protonmail.Address
+	log.Println(u.c.Unlock())
 	for _, addr := range u.u.Addresses {
 		if strings.EqualFold(addr.Email, fromAddrStr) {
 			fromAddr = addr
@@ -119,9 +121,9 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 		inReplyTo := inReplyToList[0].Address
 
 		filter := protonmail.MessageFilter{
-			Limit: 1,
+			Limit:      1,
 			ExternalID: inReplyTo,
-			AddressID: fromAddr.ID,
+			AddressID:  fromAddr.ID,
 		}
 		total, msgs, err := u.c.ListMessages(&filter)
 		if err != nil {

@@ -120,7 +120,8 @@ func authenticate(c *protonmail.Client, cachedAuth *CachedAuth, username string)
 	}
 	cachedAuth.Auth = *auth
 
-	return c.Unlock(auth, cachedAuth.MailboxPassword)
+	entries, _, err := c.Unlock(auth, cachedAuth.MailboxPassword)
+	return entries, err
 }
 
 func GeneratePassword() (secretKey *[32]byte, password string, err error) {
