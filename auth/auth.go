@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	//"log"
 	"os"
 
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +19,8 @@ import (
 )
 
 const authFile = "auth.json"
+
+var ByteSaltedStarted []byte
 
 type CachedAuth struct {
 	protonmail.Auth
@@ -120,7 +124,11 @@ func authenticate(c *protonmail.Client, cachedAuth *CachedAuth, username string)
 	}
 	cachedAuth.Auth = *auth
 
-	return c.Unlock(auth, cachedAuth.MailboxPassword)
+	a, passphrase, d := c.Unlock(auth, cachedAuth.MailboxPassword)
+
+	ByteSaltedStarted = passphrase
+
+	return a, d
 }
 
 func GeneratePassword() (secretKey *[32]byte, password string, err error) {
@@ -191,6 +199,7 @@ func (m *Manager) Auth(username, password string) (*protonmail.Client, openpgp.E
 
 		// authenticate updates cachedAuth with the new refresh token
 		privateKeys, err := authenticate(c, &cachedAuth, username)
+		//log.Println(privateKeys)
 		if err != nil {
 			return nil, nil, err
 		}

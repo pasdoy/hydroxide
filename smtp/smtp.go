@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	//"log"
 	"strings"
 
 	"github.com/emersion/go-message/mail"
@@ -74,6 +76,7 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 	if fromAddr == nil {
 		return errors.New("unknown sender address")
 	}
+
 	if len(fromAddr.Keys) == 0 {
 		return errors.New("sender address has no private key")
 	}
@@ -84,7 +87,12 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 		return fmt.Errorf("cannot parse sender private key: %v", err)
 	}
 
-	var privateKey *openpgp.Entity
+	if err = encryptedPrivateKey.PrivateKey.Decrypt(auth.ByteSaltedStarted); err != nil {
+		return fmt.Errorf("cannot decrypt with the hack: %v", err)
+	}
+	privateKey := encryptedPrivateKey
+	/*var privateKey *openpgp.Entity
+	log.Println(u.privateKeys)
 	for _, e := range u.privateKeys {
 		if e.PrimaryKey.KeyId == encryptedPrivateKey.PrimaryKey.KeyId {
 			privateKey = e
@@ -93,7 +101,7 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 	}
 	if privateKey == nil {
 		return errors.New("sender address key hasn't been decrypted")
-	}
+	}*/
 
 	msg := &protonmail.Message{
 		ToList:    toPMAddressList(toList),
@@ -119,9 +127,9 @@ func (u *user) Send(from string, to []string, r io.Reader) error {
 		inReplyTo := inReplyToList[0].Address
 
 		filter := protonmail.MessageFilter{
-			Limit: 1,
+			Limit:      1,
 			ExternalID: inReplyTo,
-			AddressID: fromAddr.ID,
+			AddressID:  fromAddr.ID,
 		}
 		total, msgs, err := u.c.ListMessages(&filter)
 		if err != nil {
@@ -355,6 +363,8 @@ func (be *backend) Login(username, password string) (smtp.User, error) {
 	}
 
 	// TODO: decrypt private keys in u.Addresses
+
+	//log.Println(u.Addresses)
 
 	return &user{c, u, privateKeys}, nil
 }
