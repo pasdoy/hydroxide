@@ -193,17 +193,17 @@ func (c *Client) AuthRefresh(expiredAuth *Auth) (*Auth, error) {
 	return auth, nil
 }
 
-func (c *Client) Unlock(auth *Auth, passphrase string) (openpgp.EntityList, []byte, error) {
+func (c *Client) Unlock(auth *Auth, passphrase string) (openpgp.EntityList, error) {
 	passphraseBytes := []byte(passphrase)
 	if auth.keySalt != "" {
 		keySalt, err := base64.StdEncoding.DecodeString(auth.keySalt)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		passphraseBytes, err = computeKeyPassword(passphraseBytes, keySalt)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 	}
 
@@ -211,10 +211,10 @@ func (c *Client) Unlock(auth *Auth, passphrase string) (openpgp.EntityList, []by
 
 	keyRing, err := openpgp.ReadArmoredKeyRing(strings.NewReader(auth.privateKey))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if len(keyRing) == 0 {
-		return nil, nil, errors.New("auth key ring is empty")
+		return nil, errors.New("auth key ring is empty")
 	}
 
 	for _, e := range keyRing {
@@ -234,7 +234,7 @@ func (c *Client) Unlock(auth *Auth, passphrase string) (openpgp.EntityList, []by
 
 		for _, priv := range privateKeys {
 			if err := priv.Decrypt(passphraseBytes); err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 		}
 	}
@@ -243,24 +243,24 @@ func (c *Client) Unlock(auth *Auth, passphrase string) (openpgp.EntityList, []by
 
 	block, err := armor.Decode(strings.NewReader(auth.accessToken))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	msg, err := openpgp.ReadMessage(block.Body, keyRing, nil, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// TODO: maybe check signature
 	accessTokenBytes, err := ioutil.ReadAll(msg.UnverifiedBody)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	c.uid = auth.UID
 	c.accessToken = string(accessTokenBytes)
 	c.keyRing = keyRing
-	return keyRing, passphraseBytes, nil
+	return keyRing, nil
 }
 
 func (c *Client) Logout() error {

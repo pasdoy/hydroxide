@@ -11,16 +11,16 @@ import (
 	"time"
 
 	imapmove "github.com/emersion/go-imap-move"
-	imapspacialuse "github.com/emersion/go-imap-specialuse"
 	imapserver "github.com/emersion/go-imap/server"
+	imapspacialuse "github.com/emersion/go-imap-specialuse"
 	"github.com/emersion/go-smtp"
 	"github.com/howeyc/gopass"
 
 	"github.com/emersion/hydroxide/auth"
 	"github.com/emersion/hydroxide/carddav"
 	"github.com/emersion/hydroxide/events"
-	imapbackend "github.com/emersion/hydroxide/imap"
 	"github.com/emersion/hydroxide/protonmail"
+	imapbackend "github.com/emersion/hydroxide/imap"
 	smtpbackend "github.com/emersion/hydroxide/smtp"
 )
 
@@ -118,7 +118,7 @@ func main() {
 			}
 		}
 
-		_, _, err := c.Unlock(a, mailboxPassword)
+		_, err := c.Unlock(a, mailboxPassword)
 		if err != nil {
 			log.Fatal(err)
 		}
